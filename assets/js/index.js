@@ -19,7 +19,7 @@ const menu = {
     type: 'list',
     message: 'Please select from the following:',
     name: 'choice',
-    choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update an employee role', 'View employees by manager', 'View employees by department', 'Update employee manager', 'Quit']
+    choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update an employee role', 'View employees by manager', 'View employees by department', 'Update employee manager', 'View utilized budget of a department', 'Quit']
 };
 
 //Calls function based on option choosed from menu
@@ -55,6 +55,9 @@ function displayMenu() {
                 break;
             case 'Update employee manager':
                 updateEmployeeManager();
+                break;
+            case 'View utilized budget of a department':
+                viewUtilizedBudget();
                 break;
         }
     })
@@ -383,6 +386,34 @@ function getUpdateManagerId(updateEmployeeManagerResultsThree, manager_name) {
 
 function getUpdateEmployeeId(updateEmployeeManagerResults, employee_name) {
     return updateEmployeeManagerResults.filter(result => result.employee_name === employee_name)[0].id;
+};
+
+function viewUtilizedBudget() {
+    db.query(`SELECT id, name FROM department`, function (err, utilizedBudgetResults) {
+        var selectDepartmentQuestions = getDepartmentNames(utilizedBudgetResults);
+        inquirer.prompt(selectDepartmentQuestions).then(inquirerResponse => {
+            var deptName = getDeptName(utilizedBudgetResults, inquirerResponse.deptChoice);
+            let query = `SELECT department.name AS department, sum(salary) AS budget FROM employees 
+        JOIN roles
+        ON role_id = roles.id
+        JOIN department
+        ON department_id = department.id
+        WHERE department.name = ?`
+            db.query(query, deptName,
+                (err, results) => displayResults(results));
+        })
+    })
+};
+
+function getDepartmentNames(utilizedBudgetResults) {
+    var deptNames = utilizedBudgetResults.map(result => result.name);
+    var selectDepartmentQuestion = {
+        type: 'list',
+        message: 'Select your department',
+        name: 'deptChoice',
+        choices: deptNames
+    }
+    return selectDepartmentQuestion;
 };
 
 

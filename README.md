@@ -2,7 +2,19 @@
 
 ## [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## This repository contains the Javascript and SQL files for the employee tracker challenge for module 12. It allows the user to access the employee database through the command line. 
+## Description
+This repository contains the Javascript and SQL files for the employee tracker challenge for module 12. It allows the user to access the employee database through the command line. The user can choose from the following options:
+- View all depaartments
+- View all roles
+- View all employees
+- Add a role
+- Add a department
+- Add employees
+- Update employees
+- View employees by department
+- View employees by manager
+- Update employee managers
+- View utilized budget of a department
 
 
 >## Table of contents
