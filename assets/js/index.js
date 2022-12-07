@@ -7,15 +7,14 @@ const { response } = require('express');
 const db = mysql.createConnection(
     {
         host: 'localhost',
-        // MySQL username,
         user: 'root',
-        // MySQL password
         password: 'Blazoonie22!',
         database: 'employee_db'
     },
     console.log(`Connected to the employee_db database.`)
 );
 
+//Dropdown to choose options
 const menu = {
     type: 'list',
     message: 'Please select from the following:',
@@ -23,6 +22,7 @@ const menu = {
     choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update an employee role', 'View employees by manager', 'View employees by department', 'Update employee manager', 'Quit']
 };
 
+//Calls function based on option choosed from menu
 function displayMenu() {
     inquirer.prompt(menu).then(response => {
         switch (response.choice) {
@@ -112,6 +112,7 @@ function addDepartment() {
     })
 }
 
+//Inquirer questions for add role function
 function getRoleQuestions(queryResults) {
     var roleQuestions = [
         {
@@ -174,8 +175,9 @@ function addEmployee() {
         })
 
     })
-}
+};
 
+//Inquirer questions for add employee function
 function getEmployeeQuestions(roleResults, managerResults) {
     var employeeQuestions = [
         {
@@ -243,6 +245,7 @@ function getEmployeeId(employeeNameResults, fullName) {
     return employeeNameResults.filter(result => result.employee_name === fullName)[0].id;
 }
 
+//Inquirer questions for update employee function
 function getUpdateEmployeeQuestions(employeeNameResults, updateRoleResults) {
     var updateEmployeeQuestions = [];
 
@@ -278,6 +281,7 @@ function viewEmployeesByManager() {
     })
 };
 
+//Inquirer questions for view employee by manager function
 function getEmployeeByManagerQuestions(viewByManagerResults) {
     var viewByManagerQuestions = [];
     var managerNames = viewByManagerResults.map(result => result.manager_name);
@@ -292,7 +296,6 @@ function getEmployeeByManagerQuestions(viewByManagerResults) {
 };
 
 function getViewByManagerId(viewByManagerResults, managerName) {
-    console.log(viewByManagerResults);
     return viewByManagerResults.filter(result => result.manager_name === managerName)[0].id;
 };
 
@@ -313,6 +316,7 @@ function viewEmployeesByDept() {
     })
 };
 
+//Inquirer questions for view employee by department function
 function getEmployeeByDeptQuestions(employeeByDeptResults) {
     var deptNames = employeeByDeptResults.map(result => result.name);
     var employeeByDeptQuestions = {
@@ -349,6 +353,7 @@ function updateEmployeeManager() {
     })
 };
 
+//Inquirer questions for update employee manager function
 function getUpdateEmployeeManagerQuestions(updateEmployeeManagerResults, updateEmployeeManagerResultsTwo) {
     var updateEmployeeManagerQuestions = [];
 
