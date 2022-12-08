@@ -297,7 +297,7 @@ function deleteDepartment() {
             db.query(query, inquirerResponse.choice, (err, rows) => {
                 if (err)
                     throw err;
-                console.log(`Deleted ${inquirerResponse.deptChoice} department successfully from database`);
+                console.log(`Deleted ${inquirerResponse.choice} department successfully from database`);
                 displayMenu();
             });
         })
@@ -341,6 +341,7 @@ function getInquirerQuestionWithChoice(question, results, extractValueFunction, 
         type: 'list',
         message: question,
         name: choiceName,
+        pageSize: 20,
         choices: choices
     }
     return inquirerQuestion;
@@ -352,6 +353,7 @@ function getInquirerQuestion(question, results, extractValueFunction) {
         type: 'list',
         message: question,
         name: 'choice',
+        pageSize: 20,
         choices: choices
     }
     return inquirerQuestion;
