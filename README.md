@@ -15,6 +15,9 @@ This repository contains the Javascript and SQL files for the employee tracker c
 - View employees by manager
 - Update employee managers
 - View utilized budget of a department
+- Delete department
+- Delete role
+- Delete employee
 
 
 >## Table of contents
