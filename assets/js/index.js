@@ -2,7 +2,6 @@ const inquirer = require('inquirer');
 const mysql = require('mysql2');
 
 const cTable = require('console.table');
-const { response } = require('express');
 
 const db = mysql.createConnection(
     {
@@ -11,7 +10,7 @@ const db = mysql.createConnection(
         password: 'Blazoonie22!',
         database: 'employee_db'
     },
-    console.log(`Connected to the employee_db database.`)
+    console.log("\r\n __                       _                         ___      _        _                    \r\n\/ _\\_   _ _ __   ___ _ __| |__   ___ _ __ ___      \/   \\__ _| |_ __ _| |__   __ _ ___  ___ \r\n\\ \\| | | | \'_ \\ \/ _ \\ \'__| \'_ \\ \/ _ \\ \'__\/ _ \\    \/ \/\\ \/ _` | __\/ _` | \'_ \\ \/ _` \/ __|\/ _ \\\r\n_\\ \\ |_| | |_) |  __\/ |  | | | |  __\/ | | (_) |  \/ \/_\/\/ (_| | || (_| | |_) | (_| \\__ \\  __\/\r\n\\__\/\\__,_| .__\/ \\___|_|  |_| |_|\\___|_|  \\___\/  \/___,\' \\__,_|\\__\\__,_|_.__\/ \\__,_|___\/\\___|\r\n         |_|                                                                               \r\n")
 );
 
 //Dropdown to choose options
@@ -19,6 +18,7 @@ const menu = {
     type: 'list',
     message: 'Please select from the following:',
     name: 'choice',
+    pageSize: 20,
     choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update an employee role', 'View employees by manager', 'View employees by department', 'Update employee manager', 'View utilized budget of a department', 'Delete department', 'Delete role', 'Delete employee', 'Quit']
 };
 
@@ -68,6 +68,8 @@ function displayMenu() {
             case 'Delete employee':
                 deleteEmployee();
                 break;
+            case 'Quit':
+                process.exit();
         }
     })
 
@@ -122,6 +124,7 @@ function addDepartment() {
 
 //Inquirer questions for add role function
 function getRoleQuestions(queryResults) {
+
     var roleQuestions = [
         {
             type: 'input',
@@ -132,16 +135,10 @@ function getRoleQuestions(queryResults) {
             type: 'input',
             message: 'Enter your salary',
             name: 'salary'
-        }];
+        },
+        getInquirerQuestion('Select your department', queryResults, result => result.name)
+    ];
 
-    var departmentNames = queryResults.map(result => result.name);
-    var departmentOptions = {
-        type: 'list',
-        message: 'Select your department',
-        name: 'choice',
-        choices: departmentNames
-    }
-    roleQuestions.push(departmentOptions);
     return roleQuestions;
 };
 
@@ -193,69 +190,35 @@ function getEmployeeQuestions(roleResults, managerResults) {
             type: 'input',
             message: 'Enter your last name',
             name: 'lastName'
-        }
+        },
+        getInquirerQuestionWithChoice('Select your role', roleResults, result => result.title, 'roleChoice'),
+        getInquirerQuestionWithChoice('Select your manager', managerResults, result => result.manager_name, 'managerChoice')
     ]
-    var roleTitles = roleResults.map(result => result.title);
-    var titleOptions = {
-        type: 'list',
-        message: 'Select your role',
-        name: 'roleChoice',
-        choices: roleTitles
-    }
-    employeeQuestions.push(titleOptions);
-    var managerNames = managerResults.map(result => result.manager_name);
-    var managerOptions = {
-        type: 'list',
-        message: 'Select your manager',
-        name: 'managerChoice',
-        choices: managerNames
-    }
-    employeeQuestions.push(managerOptions);
+
     return employeeQuestions;
 };
 
 function updateEmployeeRole() {
     db.query(`SELECT id, CONCAT_WS(" ", first_name, last_name) AS employee_name FROM employees`, function (err, employeeNameResults) {
         db.query(`SELECT id, title FROM roles`, function (err, updateRoleResults) {
-            var updateEmployeeQuestions = getUpdateEmployeeQuestions(employeeNameResults, updateRoleResults);
+            var updateEmployeeQuestions = [
+                getInquirerQuestionWithChoice(`Which employee's role would you like to update?`, employeeNameResults, result => result.employee_name, 'employeeChoice'),
+                getInquirerQuestionWithChoice(`Which role would you like to assign?`, updateRoleResults, result => result.title, 'titleChoice')
+            ];
             inquirer.prompt(updateEmployeeQuestions).then(inquirerResponse => {
                 var roleId = extractId(updateRoleResults, result => result.title === inquirerResponse.titleChoice);
-                var employeeId = extractId(employeeNameResults, result => result.employee_name === inquirerResponse.nameChoice);
+                var employeeId = extractId(employeeNameResults, result => result.employee_name === inquirerResponse.employeeChoice);
                 let query = `UPDATE employees SET role_id = ? WHERE id = ?`
                 db.query(query, [roleId, employeeId],
                     (err, rows) => {
                         if (err) throw err;
-                        console.log(`Updated employee ${inquirerResponse.nameChoice} successfully in database`);
+                        console.log(`Updated employee ${inquirerResponse.employeeChoice} successfully in database`);
                         displayMenu();
                     });
             });
         })
 
     })
-};
-
-//Inquirer questions for update employee function
-function getUpdateEmployeeQuestions(employeeNameResults, updateRoleResults) {
-    var updateEmployeeQuestions = [];
-
-    var employeeNames = employeeNameResults.map(result => result.employee_name);
-    var employeeName = {
-        type: 'list',
-        message: `Which employee's role would you like to update?`,
-        name: 'nameChoice',
-        choices: employeeNames
-    };
-    updateEmployeeQuestions.push(employeeName);
-
-    var roleOptions = updateRoleResults.map(result => result.title);
-    var updateRoleOptions = {
-        type: 'list',
-        message: 'Which role would you like to assign?',
-        name: 'titleChoice',
-        choices: roleOptions
-    };
-    updateEmployeeQuestions.push(updateRoleOptions);
-    return updateEmployeeQuestions;
 };
 
 function viewEmployeesByManager() {
@@ -290,48 +253,25 @@ function updateEmployeeManager() {
     db.query(`SELECT id, CONCAT_WS(" ", first_name, last_name) AS employee_name, manager_id FROM employees WHERE manager_id IS NOT NULL`, function (err, updateEmployeeManagerResults) {
         db.query(`SELECT id, CONCAT_WS(" ", first_name, last_name) AS manager_name FROM employees WHERE manager_id IS NULL`, function (err, updateEmployeeManagerResultsTwo) {
             db.query(`SELECT id, CONCAT_WS(" ", first_name, last_name) AS employee_name, manager_id FROM employees`, function (err, updateEmployeeManagerResultsThree) {
-                var updateEmployeeManagerQuestions = getUpdateEmployeeManagerQuestions(updateEmployeeManagerResults, updateEmployeeManagerResultsTwo);
+                var updateEmployeeManagerQuestions = [
+                    getInquirerQuestionWithChoice(`Which employee's manager would you like to update?`, updateEmployeeManagerResults, result => result.employee_name, 'employeeChoice'),
+                    getInquirerQuestionWithChoice(`Which manager would you like to assign?`, updateEmployeeManagerResultsTwo, result => result.manager_name, 'managerChoice')
+                ];
                 inquirer.prompt(updateEmployeeManagerQuestions).then(inquirerResponse => {
                     var managerId = extractId(updateEmployeeManagerResultsThree, result => result.employee_name === inquirerResponse.managerChoice);
-                    var employeeId = extractId(updateEmployeeManagerResults, result => result.employee_name === inquirerResponse.nameChoice);
+                    var employeeId = extractId(updateEmployeeManagerResults, result => result.employee_name === inquirerResponse.employeeChoice);
                     let query = `UPDATE employees SET manager_id = ? WHERE id = ?;`
                     db.query(query, [managerId, employeeId],
                         (err, rows) => {
                             if (err) throw err;
-                            console.log(`Updated employee manager for ${inquirerResponse.nameChoice} successfully in database`);
+                            console.log(`Updated employee manager for ${inquirerResponse.employeeChoice} successfully in database`);
                             displayMenu();
                         });
                 })
-
             });
         })
     })
 };
-
-//Inquirer questions for update employee manager function
-function getUpdateEmployeeManagerQuestions(updateEmployeeManagerResults, updateEmployeeManagerResultsTwo) {
-    var updateEmployeeManagerQuestions = [];
-
-    var employeeNames = updateEmployeeManagerResults.map(result => result.employee_name);
-    var employeeName = {
-        type: 'list',
-        message: `Which employee's manager would you like to update?`,
-        name: 'nameChoice',
-        choices: employeeNames
-    };
-    updateEmployeeManagerQuestions.push(employeeName);
-
-    var managerOptions = updateEmployeeManagerResultsTwo.map(result => result.manager_name);
-    var updateManagerOptions = {
-        type: 'list',
-        message: 'Which manager would you like to assign?',
-        name: 'managerChoice',
-        choices: managerOptions
-    };
-    updateEmployeeManagerQuestions.push(updateManagerOptions);
-    return updateEmployeeManagerQuestions;
-};
-
 
 function viewUtilizedBudget() {
     db.query(`SELECT id, name FROM department`, function (err, utilizedBudgetResults) {
@@ -379,18 +319,6 @@ function deleteRole() {
     })
 };
 
-
-function getInquirerQuestion(question, results, extractValueFunction) {
-    var choices = results.map(extractValueFunction);
-    var inquirerQuestion = {
-        type: 'list',
-        message: question,
-        name: 'choice',
-        choices: choices
-    }
-    return inquirerQuestion;
-};
-
 function deleteEmployee() {
     db.query(`SELECT id, CONCAT_WS(" ", first_name, last_name) AS employee_name FROM employees`, function (err, deleteEmployeeResults) {
         var deleteEmployeeQuestions = getInquirerQuestion('Select employee to delete', deleteEmployeeResults, result => result.employee_name);
@@ -405,6 +333,28 @@ function deleteEmployee() {
                 });
         });
     })
+};
+
+function getInquirerQuestionWithChoice(question, results, extractValueFunction, choiceName) {
+    var choices = results.map(extractValueFunction);
+    var inquirerQuestion = {
+        type: 'list',
+        message: question,
+        name: choiceName,
+        choices: choices
+    }
+    return inquirerQuestion;
+};
+
+function getInquirerQuestion(question, results, extractValueFunction) {
+    var choices = results.map(extractValueFunction);
+    var inquirerQuestion = {
+        type: 'list',
+        message: question,
+        name: 'choice',
+        choices: choices
+    }
+    return inquirerQuestion;
 };
 
 function extractId(results, filterFunction) {
