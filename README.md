@@ -28,10 +28,11 @@ This repository contains the Javascript and SQL files for the employee tracker c
 - [License](#license)
 - [Questions](#questions)
 
+## You can watch the walkthrough video [here](https://watch.screencastify.com/v/UcqSqZXq536WwJwQ5v9G)
 
 ### The following image shows the web application's appearance and functionality:
 
-![screenshot](https://github.com/rashida53/note-taker/blob/main/note-taker.png?raw=true)
+![screenshot](https://github.com/rashida53/employee-tracker/blob/main/employee-tracker.png?raw=true)
 
 ## [**Installation**](#table-of-contents)
 
